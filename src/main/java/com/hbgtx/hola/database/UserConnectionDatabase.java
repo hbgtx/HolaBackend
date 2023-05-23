@@ -7,6 +7,7 @@ import java.util.*;
 
 // TODO: Replace with actual database
 public class UserConnectionDatabase {
+    private static final Object mutex = new Object();
     private static UserConnectionDatabase userConnectionDatabase;
     private final HashMap<String, UserHandler> userHandlerMap;
 
@@ -20,24 +21,32 @@ public class UserConnectionDatabase {
     }
 
     public void addUserHandler(String userId, UserHandler userHandler) {
-        userHandlerMap.remove(userId);
-        userHandlerMap.put(userId, userHandler);
+        synchronized (mutex) {
+            userHandlerMap.remove(userId);
+            userHandlerMap.put(userId, userHandler);
+        }
     }
 
     public UserHandler getUserHandler(EntityId userId) {
-        return userHandlerMap.get(userId.getId());
+        synchronized (mutex) {
+            return userHandlerMap.get(userId.getId());
+        }
     }
 
     public void deleteUserHandler(EntityId userId) {
-        if (userId!=null) {
-            userHandlerMap.remove(userId.getId());
+        synchronized (mutex) {
+            if (userId != null) {
+                userHandlerMap.remove(userId.getId());
+            }
         }
     }
 
     public List<UserHandler> getAndDeleteAllHandlers() {
-        List<UserHandler> userHandlers = List.copyOf(userHandlerMap.values());
-        userHandlerMap.clear();
-        return userHandlers;
+        synchronized (mutex) {
+            List<UserHandler> userHandlers = List.copyOf(userHandlerMap.values());
+            userHandlerMap.clear();
+            return userHandlers;
+        }
     }
 
 
