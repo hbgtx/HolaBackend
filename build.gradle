@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+group 'com.hbgtx'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+/*
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.hbgtx.hola.HolaBackend'
+        )
+    }
+}*/
+
+//create a single Jar with all dependencies
+tasks.register('fatJar', Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'HolaBackend',
+                'Main-Class': 'com.hbgtx.hola.HolaServer'
+    }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
