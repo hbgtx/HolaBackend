@@ -2,9 +2,11 @@ package com.hbgtx.hola.manager;
 
 import com.hbgtx.hola.callbacks.UserIdCallback;
 import com.hbgtx.hola.database.DBHelper;
+import com.hbgtx.hola.handlers.MessageHandler;
 import com.hbgtx.hola.handlers.PendingMessagesHandler;
 import com.hbgtx.hola.handlers.UserHandler;
 import com.hbgtx.hola.models.EntityId;
+import com.hbgtx.hola.models.Message;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,14 +19,17 @@ public class ConnectionManager extends Thread{
     private final int port;
     private final DBHelper dbHelper;
     private final PendingMessagesHandler pendingMessagesHandler;
+    private final MessageHandler messageHandler;
     private ServerSocket serverSocket;
     private boolean isListening = false;
     private boolean keepRunning = true;
+    private final Object mutex = new Object();
 
     private ConnectionManager(int port) {
         this.port = port;
         this.dbHelper = new DBHelper();
         this.pendingMessagesHandler = new PendingMessagesHandler();
+        messageHandler = new MessageHandler();
     }
 
     public static ConnectionManager getInstance(int port) {
@@ -46,8 +51,8 @@ public class ConnectionManager extends Thread{
                 Socket socket = serverSocket.accept();
                 UserHandler userHandler = new UserHandler(socket, new UserIdCallback() {
                     @Override
-                    public void onUserIdReceived(EntityId userId, UserHandler userHandler) {
-                        handleUserIdReceived(userId, userHandler);
+                    public boolean onUserIdReceived(EntityId userId, UserHandler userHandler) {
+                        return handleUserIdReceived(userId, userHandler);
                     }
 
                     @Override
@@ -64,9 +69,25 @@ public class ConnectionManager extends Thread{
         }
     }
 
-    private void handleUserIdReceived(EntityId userId, UserHandler handler) {
-        dbHelper.addUserHandler(userId.getId(), handler);
-        pendingMessagesHandler.checkPendingMessages(userId, handler);
+    private boolean handleUserIdReceived(EntityId userId, UserHandler handler) {
+        synchronized (mutex) {
+            if (canAddUserHandler(userId)) {
+                dbHelper.addUserHandler(userId.getId(), handler);
+                pendingMessagesHandler.checkPendingMessages(userId, handler);
+                messageHandler.handleMessage(Message.getUserIdReceivedMessage(userId));
+                return true;
+            }
+            return false;
+        }
+
+    }
+
+    private boolean canAddUserHandler(EntityId userId) {
+        UserHandler userHandler = dbHelper.getUserHandler(userId);
+        if (userHandler == null) {
+            return true;
+        }
+        return !userHandler.isActive();
     }
 
     private void unregisterUserHandler(EntityId userId) {

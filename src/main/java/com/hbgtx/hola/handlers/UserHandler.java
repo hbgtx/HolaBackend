@@ -62,27 +62,30 @@ public class UserHandler extends Thread {
 
     public boolean sendMessage(Message message) {
         System.out.println("Sending Message: " + message);
-        try {
-            sendPing();
+        if (isActive()) {
             out.println(message);
             return true;
-        } catch (IOException e) {
-            System.out.println("Exception while sending message");
-            return false;
         }
+        return false;
     }
 
-    public void sendPing() throws IOException {
+    public boolean isActive() {
         if (socket.isConnected() && userIdReceived) {
-            socket.sendUrgentData(PING_DATA);
+            try {
+                socket.sendUrgentData(PING_DATA);
+                return true;
+            } catch (IOException e) {
+                System.out.println("User is down:" + userId);
+            }
         }
+        return false;
     }
 
     private void listenForUserId() throws IOException {
         String inputLine;
         int readResult;
         while (keepRunning && ((readResult = in.read()) != -1)) {
-            inputLine = (char)readResult + in.readLine();
+            inputLine = (char) readResult + in.readLine();
             JsonObject jsonObject = (JsonObject) JsonParser.parseString(inputLine);
             if (jsonObject.has(KEY_USER_ID)) {
                 String userIdValue = jsonObject.get(KEY_USER_ID).getAsString();
@@ -93,8 +96,9 @@ public class UserHandler extends Thread {
                 }
                 setUserId(userId);
                 System.out.println("User id:" + userIdValue);
-                userIdCallback.onUserIdReceived(userId, this);
-                return;
+                if (userIdCallback.onUserIdReceived(userId, this)) {
+                 return;
+                }
             } else {
                 out.println(USER_ID_REQUEST);
             }
@@ -105,8 +109,8 @@ public class UserHandler extends Thread {
         System.out.println("listening messages for user:" + userId);
         String inputLine;
         int readResult;
-        while (keepRunning && ((readResult = in.read()) != -1) ) {
-            inputLine = (char)readResult + in.readLine();
+        while (keepRunning && ((readResult = in.read()) != -1)) {
+            inputLine = (char) readResult + in.readLine();
             System.out.println("Message received from user:" + userId + " Message:" + inputLine);
             Message message = Message.getMessageFromString(inputLine);
             if (message != null) {

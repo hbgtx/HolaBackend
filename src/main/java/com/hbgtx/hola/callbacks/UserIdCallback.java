@@ -4,6 +4,6 @@ import com.hbgtx.hola.handlers.UserHandler;
 import com.hbgtx.hola.models.EntityId;
 
 public interface UserIdCallback {
-    void onUserIdReceived(EntityId userId, UserHandler userHandler);
+    boolean onUserIdReceived(EntityId userId, UserHandler userHandler);
     void onUserDisconnected(EntityId userId);
 }

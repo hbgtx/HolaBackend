@@ -49,10 +49,13 @@ public class MessageHandler {
     private void handleTypingMessage(Message message) {
         typingMessageHandler.handleMessage(message);
     }
-    private void handleInfoMessage(Message message) {
-        infoMessageHandler.handleMessage(message);
 
+    private void handleInfoMessage(Message message) {
+        if (!infoMessageHandler.handleMessage(message)) {
+            pendingMessagesHandler.addToPendingMessages(message);
+        }
     }
+
     private void handleRequestMessage(Message message) {
         if (!requestMessageHandler.handleMessage(message)) {
             pendingMessagesHandler.addToPendingMessages(message);

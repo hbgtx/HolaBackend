@@ -8,6 +8,7 @@ import static com.hbgtx.hola.utils.ConstantUtils.*;
 
 public record Message(MessageType messageType, EntityId messageId, EntityId senderId, EntityId receiverId,
                       MessageContent messageContent) {
+    private static final Object mutex = new Object();
     private static int customMessageId = 1;
 
     public static Message getMessageFromString(String message) {
@@ -26,9 +27,26 @@ public record Message(MessageType messageType, EntityId messageId, EntityId send
     }
 
     public static Message getAckForUserMessage(Message message) {
-        return new Message(MessageType.ACK_MESSAGE, new EntityId(String.valueOf(customMessageId++)),
+        return new Message(MessageType.ACK_MESSAGE, new EntityId(String.valueOf(getMessageId())),
                 new EntityId(RESERVED_SERVER_ID), message.senderId(),
                 new MessageContent(message.messageId.getId()));
+    }
+
+    private static int getMessageId() {
+        synchronized (mutex) {
+            return customMessageId++;
+        }
+    }
+
+    public static Message getUserIdReceivedMessage(EntityId userId) {
+        JsonObject messageContent = new JsonObject();
+        messageContent.addProperty(KEY_MESSAGE_CONTENT_INFO, MESSAGE_USER_ID_RECEIVED);
+        messageContent.addProperty(KEY_MESSAGE_EXTRA, userId.getId());
+
+        return new Message(
+                MessageType.INFO_MESSAGE, new EntityId(String.valueOf(getMessageId())),
+                new EntityId(RESERVED_SERVER_ID), userId,
+                new MessageContent(messageContent.toString()));
     }
 
     public String toString() {
@@ -40,4 +58,5 @@ public record Message(MessageType messageType, EntityId messageId, EntityId send
         message.addProperty(KEY_MESSAGE_CONTENT, messageContent().toString());
         return message.toString();
     }
+
 }
