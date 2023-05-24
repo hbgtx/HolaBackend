@@ -27,14 +27,14 @@ public record Message(MessageType messageType, EntityId messageId, EntityId send
     }
 
     public static Message getAckForUserMessage(Message message) {
-        return new Message(MessageType.ACK_MESSAGE, new EntityId(String.valueOf(getMessageId())),
+        return new Message(MessageType.ACK_MESSAGE, getMessageId(),
                 new EntityId(RESERVED_SERVER_ID), message.senderId(),
                 new MessageContent(message.messageId.getId()));
     }
 
-    private static int getMessageId() {
+    private static EntityId getMessageId() {
         synchronized (mutex) {
-            return customMessageId++;
+            return new EntityId(String.valueOf(customMessageId++));
         }
     }
 
@@ -44,7 +44,7 @@ public record Message(MessageType messageType, EntityId messageId, EntityId send
         messageContent.addProperty(KEY_MESSAGE_EXTRA, userId.getId());
 
         return new Message(
-                MessageType.INFO_MESSAGE, new EntityId(String.valueOf(getMessageId())),
+                MessageType.INFO_MESSAGE, getMessageId(),
                 new EntityId(RESERVED_SERVER_ID), userId,
                 new MessageContent(messageContent.toString()));
     }
