@@ -12,6 +12,7 @@ public class ConstantUtils {
     public static final String KEY_MESSAGE_CONTENT = "message_content";
     public static final String KEY_MESSAGE_CONTENT_INFO = "message_content_info";
     public static final String KEY_MESSAGE_EXTRA = "message_content_extra";
+    public static final String KEY_TIMESTAMP = "timestamp";
     public static final String MESSAGE_TYPE_CHAT = "message_type_chat";
     public static final String MESSAGE_TYPE_ACK = "message_type_ack";
     public static final String MESSAGE_TYPE_TYPING = "message_type_typing";
