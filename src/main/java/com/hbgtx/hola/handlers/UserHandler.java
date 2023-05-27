@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.hbgtx.hola.utils.ConstantUtils.*;
 import static com.hbgtx.hola.utils.Util.isServerId;
@@ -23,7 +24,7 @@ public class UserHandler extends Thread {
     private PrintWriter out;
     private BufferedReader in;
     private boolean userIdReceived = false;
-    private boolean keepRunning = true;
+    private final AtomicBoolean keepRunning = new AtomicBoolean(true);
 
 
     public UserHandler(Socket socket, UserIdCallback userIdCallback) {
@@ -47,7 +48,7 @@ public class UserHandler extends Thread {
     }
 
     public void stopListening() {
-        this.keepRunning = false;
+        this.keepRunning.set(false);
         this.userIdReceived = false;
         userIdCallback.onUserDisconnected(userId);
         System.out.println("User:" + userId + " stopped listening");
@@ -84,7 +85,7 @@ public class UserHandler extends Thread {
     private void listenForUserId() throws IOException {
         String inputLine;
         int readResult;
-        while (keepRunning && ((readResult = in.read()) != -1)) {
+        while (keepRunning.get() && ((readResult = in.read()) != -1)) {
             inputLine = (char) readResult + in.readLine();
             JsonObject jsonObject = (JsonObject) JsonParser.parseString(inputLine);
             if (jsonObject.has(KEY_USER_ID)) {
@@ -109,7 +110,7 @@ public class UserHandler extends Thread {
         System.out.println("listening messages for user:" + userId);
         String inputLine;
         int readResult;
-        while (keepRunning && ((readResult = in.read()) != -1)) {
+        while (keepRunning.get() && ((readResult = in.read()) != -1)) {
             inputLine = (char) readResult + in.readLine();
             System.out.println("Message received from user:" + userId + " Message:" + inputLine);
             Message message = Message.getMessageFromString(inputLine);
