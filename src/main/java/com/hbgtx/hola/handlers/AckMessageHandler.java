@@ -1,5 +1,8 @@
 package com.hbgtx.hola.handlers;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import com.hbgtx.hola.database.DBHelper;
 import com.hbgtx.hola.enums.MessageType;
 import com.hbgtx.hola.models.EntityId;
@@ -7,6 +10,7 @@ import com.hbgtx.hola.models.Message;
 
 import java.util.HashMap;
 
+import static com.hbgtx.hola.utils.ConstantUtils.KEY_MESSAGE_EXTRA;
 import static com.hbgtx.hola.utils.Util.isServerId;
 
 public class AckMessageHandler {
@@ -33,10 +37,20 @@ public class AckMessageHandler {
     }
 
     private boolean handleAckReceived(Message message) {
-        if (idToMessageMap.containsKey(message.messageId().getId())) {
-            idToMessageMap.remove(message.messageId().getId());
-            System.out.println("Acknowledged MessageId:" + message.messageId());
+        try {
+            JsonObject jsonObject = (JsonObject) JsonParser.parseString(message.messageContent().getContent());
+            if (jsonObject.has(KEY_MESSAGE_EXTRA)) {
+                String ackedMessageId = jsonObject.get(KEY_MESSAGE_EXTRA).getAsString();
+                if (idToMessageMap.containsKey(ackedMessageId)) {
+                    idToMessageMap.remove(ackedMessageId);
+                    System.out.println("Acknowledged MessageId:" + ackedMessageId);
+                }
+            }
+        } catch (JsonParseException e) {
+            System.out.println("Exception while parsing ack message:" + message);
+            e.printStackTrace();
         }
+
         return true;
     }
 

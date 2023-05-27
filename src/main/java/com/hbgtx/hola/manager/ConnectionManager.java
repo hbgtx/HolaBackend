@@ -3,7 +3,6 @@ package com.hbgtx.hola.manager;
 import com.hbgtx.hola.callbacks.UserIdCallback;
 import com.hbgtx.hola.database.DBHelper;
 import com.hbgtx.hola.handlers.MessageHandler;
-import com.hbgtx.hola.handlers.PendingMessagesHandler;
 import com.hbgtx.hola.handlers.UserHandler;
 import com.hbgtx.hola.models.EntityId;
 import com.hbgtx.hola.models.Message;
@@ -15,21 +14,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ConnectionManager extends Thread{
+public class ConnectionManager extends Thread {
     private static ConnectionManager connectionManager;
     private final int port;
     private final DBHelper dbHelper;
-    private final PendingMessagesHandler pendingMessagesHandler;
     private final MessageHandler messageHandler;
-    private ServerSocket serverSocket;
-    private boolean isListening = false;
     private final AtomicBoolean keepRunning = new AtomicBoolean(true);
     private final Object mutex = new Object();
+    private ServerSocket serverSocket;
+    private boolean isListening = false;
 
     private ConnectionManager(int port) {
         this.port = port;
         this.dbHelper = new DBHelper();
-        this.pendingMessagesHandler = new PendingMessagesHandler();
         messageHandler = new MessageHandler();
     }
 
@@ -74,7 +71,6 @@ public class ConnectionManager extends Thread{
         synchronized (mutex) {
             if (canAddUserHandler(userId)) {
                 dbHelper.addUserHandler(userId.getId(), handler);
-                pendingMessagesHandler.checkPendingMessages(userId, handler);
                 messageHandler.handleMessage(Message.getUserIdReceivedMessage(userId));
                 return true;
             }

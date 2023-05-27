@@ -33,4 +33,9 @@ public enum MessageType {
     public String getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return getType();
+    }
 }

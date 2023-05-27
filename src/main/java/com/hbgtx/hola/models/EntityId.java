@@ -4,7 +4,7 @@ public class EntityId {
     private final String id;
 
     public EntityId(String id) {
-        this.id = id;
+        this.id = id.toLowerCase();
     }
 
     public String getId() {

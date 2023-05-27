@@ -4,8 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.hbgtx.hola.enums.MessageType;
 
-import java.time.Clock;
-
 import static com.hbgtx.hola.utils.ConstantUtils.*;
 
 public record Message(MessageType messageType, EntityId messageId, EntityId senderId, EntityId receiverId,
@@ -20,7 +18,7 @@ public record Message(MessageType messageType, EntityId messageId, EntityId send
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.messageContent = messageContent;
-        this.timestamp = timestamp > 0 ? timestamp : Clock.systemDefaultZone().instant().getNano();
+        this.timestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
     }
 
     public Message(MessageType messageType, EntityId messageId, EntityId senderId, EntityId receiverId,
