@@ -13,6 +13,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConnectionManager extends Thread{
     private static ConnectionManager connectionManager;
@@ -22,7 +23,7 @@ public class ConnectionManager extends Thread{
     private final MessageHandler messageHandler;
     private ServerSocket serverSocket;
     private boolean isListening = false;
-    private boolean keepRunning = true;
+    private final AtomicBoolean keepRunning = new AtomicBoolean(true);
     private final Object mutex = new Object();
 
     private ConnectionManager(int port) {
@@ -46,7 +47,7 @@ public class ConnectionManager extends Thread{
             serverSocket = new ServerSocket(port);
             System.out.println("Server Started!");
             isListening = true;
-            while (keepRunning) {
+            while (keepRunning.get()) {
                 // keep listening for socket connections
                 Socket socket = serverSocket.accept();
                 UserHandler userHandler = new UserHandler(socket, new UserIdCallback() {
@@ -96,7 +97,7 @@ public class ConnectionManager extends Thread{
     }
 
     public void stopListening() {
-        keepRunning = false;
+        keepRunning.set(false);
         try {
             serverSocket.close();
         } catch (IOException e) {
